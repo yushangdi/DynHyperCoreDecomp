@@ -52,8 +52,9 @@ public:
 		cout << outFileName + "_" + to_string(cnt) << endl;
 		ofstream outputFile;
 		outputFile.open(outFileName + "_" + to_string(cnt) + ".out");
-		for (int i = 1; i <= scheduler.maxNodeId; ++i)
-		if(getApproxCoreVal(i) != 0) outputFile << i << " " << getApproxCoreVal(i) << endl;
+		for (int i = 0; i <= scheduler.maxNodeId; ++i){
+			if(getApproxCoreVal(i) != 0) outputFile << i << " " << getApproxCoreVal(i) << endl;
+		}
 		outputFile.close();
 		cout << "finish writing" << endl;
 	}
@@ -62,8 +63,6 @@ public:
 		std::cout << "### Batch Running Time: " << tt << std::endl;
     	std::cout << "### Batch Num: " << cnt << std::endl;
 	}
-	// get_next()
-
 
 
 	void run() {
@@ -84,7 +83,7 @@ public:
 				deleteEdge(edgeUpdate.e);
 			++cnt;
 
-			if (cnt % 10000000 == 0 || !scheduler.hasNext() ) {
+			if (cnt % 1000000 == 0 || !scheduler.hasNext() ) {
 		
 				output_answer(cnt);
 				// output_timing(cnt, t.get_next());
