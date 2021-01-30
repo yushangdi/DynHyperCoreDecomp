@@ -13,12 +13,17 @@ GraphScheduler::GraphScheduler(const char fileName[]) {
 	position = 0;
 }
 
+void GraphScheduler::reset(){
+	position = 0;
+}
+
 void GraphScheduler::load() {
 	string delimiter = " ";
 	string line;
 	vector<string> tokens;
 	unordered_map<unsigned, unsigned> deg;
 	maxDegree = 0;
+	maxNodeId = 0;
 
 	while (getline(fin, line)) {
 		tokens.clear();
@@ -55,13 +60,14 @@ void GraphScheduler::load() {
 			for (auto& u: edgeUpdate.e) {
 				++deg[u];
 				maxDegree = max(maxDegree, deg[u]);
+				maxNodeId = max(maxNodeId, u);
 			}
 		updates.push_back(edgeUpdate);
 
-		const int MOD = 1000000; // 100000000
-		if (updates.size() % MOD == MOD - 1) {
-			cerr << "READ #: " << updates.size() + 1 << endl;
-		}
+		// const int MOD = 1000000; // 100000000
+		// if (updates.size() % MOD == MOD - 1) {
+		// 	cerr << "READ #: " << updates.size() + 1 << endl;
+		// }
 	}
 
 	// Only in C++11
@@ -69,7 +75,7 @@ void GraphScheduler::load() {
 	//edge_queue_no_time_.shrink_to_fit();
 
 	numberOfNodes = deg.size();
-	cerr << "Finished. " << updates.size() << " updates." << endl;
+	cerr << "Finished Loading. " << updates.size() << " updates." << endl;
 }
 
 EdgeUpdate GraphScheduler::nextUpdate() {

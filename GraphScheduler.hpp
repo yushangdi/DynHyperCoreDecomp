@@ -20,7 +20,8 @@ public:
 	inline bool hasNext() {
 		return position < updates.size();
 	}
-	unsigned numberOfNodes, maxDegree;
+	unsigned numberOfNodes, maxDegree, maxNodeId;
+	void reset();
 private:
 	void load();
 	std::vector<EdgeUpdate> updates;

@@ -1,0 +1,2 @@
+hellomake: FullyDynamic.cpp GraphScheduler.cpp Hypergraph.cpp HypergraphCoreDecomp.cpp get_time.cc
+	g++ -std=c++17 -O3 FullyDynamic.cpp GraphScheduler.cpp Hypergraph.cpp HypergraphCoreDecomp.cpp  get_time.cc -o FullyDynamic

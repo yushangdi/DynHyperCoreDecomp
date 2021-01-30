@@ -29,23 +29,49 @@ This program is developed on Windows. "-lpsapi" is related to reporting memory u
 #include <unordered_set>
 #include <unordered_map>
 #include <algorithm>
+#include <climits>
+#include <cstring>
+#include <sstream>
+#include <iomanip>
 #include "Hypergraph.hpp"
 #include "GraphScheduler.hpp"
 #include "HypergraphCoreDecomp.hpp"
-#include "OutputMemory.cpp"
+// #include "OutputMemory.cpp"
+#include "get_time.h"
 using namespace std;
 
 class FullyDynamic {
 public:
-	FullyDynamic(double epsilon, double lambda, double alpha, char fileName[]):
-		epsilon(epsilon), lambda(lambda), alpha(alpha), scheduler(fileName) {
+	FullyDynamic(double epsilon, double lambda, double alpha, char fileName[], string outFileName):
+		epsilon(epsilon), lambda(lambda), alpha(alpha), delta(delta), scheduler(fileName), outFileName(outFileName) {
 		initialize();
 	}
+
+	void output_answer(int cnt) {
+		cout << "writing core stats to output file" << endl;
+		cout << outFileName + "_" + to_string(cnt) << endl;
+		ofstream outputFile;
+		outputFile.open(outFileName + "_" + to_string(cnt) + ".out");
+		for (int i = 1; i <= scheduler.maxNodeId; ++i)
+		if(getApproxCoreVal(i) != 0) outputFile << i << " " << getApproxCoreVal(i) << endl;
+		outputFile.close();
+		cout << "finish writing" << endl;
+	}
+
+	void output_timing(int cnt, double tt) {
+		std::cout << "### Batch Running Time: " << tt << std::endl;
+    	std::cout << "### Batch Num: " << cnt << std::endl;
+	}
+	// get_next()
+
+
+
 	void run() {
-	//	FILE *ofpVal = fopen("StatFullyDynamicCoreValue.txt", "w");
-		FILE *ofpTime = fopen("StatFullyDynamicTime.txt", "w");
-	//	FILE *ofpDetail = fopen("StatFullyDynamicDetail.txt", "w");
+		// FILE *ofpVal = fopen("StatFullyDynamicCoreValue.txt", "w");
+		// FILE *ofpTime = fopen("StatFullyDynamicTime.txt", "w");
+		// FILE *ofpDetail = fopen("StatFullyDynamicDetail.txt", "w");
 		int cnt = 0;
+		gbbs::timer t; t.start();
 		time_t t0 = clock(), totalTime = 0;
 		int lastUpdTimestamp;
 		while (scheduler.hasNext()) {
@@ -58,19 +84,27 @@ public:
 				deleteEdge(edgeUpdate.e);
 			++cnt;
 
-			if (cnt % 100000 == 0) {
-				cerr << cnt << "...\t";
+			if (cnt % 10000000 == 0 || !scheduler.hasNext() ) {
+		
+				output_answer(cnt);
+				// output_timing(cnt, t.get_next());
+
+				// cerr << cnt << "...\t";
 				// Block: print all b[t][u] and c[u] every 100000 updates
 				time_t t1 = clock();
-				fprintf(ofpTime, "%d\n", t1 - t0);
+				// fprintf(ofpTime, "%ld\n", (long)t1 - t0);
 				// fprintf(ofpVal, "%d\n", cnt);
 
+
+				///////////////// compute error start
 				/*
 				// Block: observe gracefully degrading ratios (3-dimensional figures)
 				// Run the static exact algorithm
 				HypergraphCoreDecomp hcd(h);
 				hcd.solve();
 				unordered_map<int, int> coreCount, coreCountApprox;
+				// how many numbers of count
+				// e.g. how many 1's in exact ...
 				for (auto& p: hcd.c) {
 					const Node u = p.first;
 					if (hcd.c[u] > 0) {
@@ -112,6 +146,7 @@ public:
 				for (int t = 1; t <= tau; ++t)
 					fprintf(ofpDetail, "%.9f%c", avgErr[t], t == tau ? '\n' : ' ');
 				*/
+				///////////////// compute error end
 				t0 = clock();
 			}
 
@@ -142,9 +177,9 @@ public:
 			fclose(ofpCmpModel);
 			*/
 		}
-	//	fclose(ofpVal);
-		fclose(ofpTime);
-	//	fclose(ofpDetail);
+		// fclose(ofpVal);
+		// fclose(ofpTime);
+		// fclose(ofpDetail);
 
 		/*
 		// Block: compare between different parameters
@@ -209,9 +244,11 @@ public:
 		cerr << endl;
 	}
 	Hypergraph h;
-private:
-	double epsilon, lambda, alpha;
 	GraphScheduler scheduler;
+private:
+	double epsilon, lambda, alpha, delta;
+	string outFileName;
+	unsigned maxNodeId;
 
 	int tau;
 	vector<unsigned> succ, pred;
@@ -221,7 +258,8 @@ private:
 		// But we can slightly reduce it when r is too large.
 		// alpha is decided by input.
 
-		// alpha = 2 * (1 + 3 * epsilon);
+		// alpha = 2 * (1 + 3 * epsilon); /// !! theoretically correct alpha
+		// alpha = (2 + static_cast<double>(3) / delta);
 		tau = ceil(0.15 * log(scheduler.numberOfNodes) / log(1.0 + epsilon));
 
 		// Build succ and pred
@@ -240,7 +278,11 @@ private:
 		cerr << "Lambda: ";
 		for (auto& lambda: Lambda) cerr << lambda << ' ';
 		cerr << endl;
+		cout << "epsilon: " << epsilon << endl;
+		cout << "lambda: " << lambda << endl;
+		cout << "alpha: " << alpha << endl;
 		cerr << "# of nodes = " << scheduler.numberOfNodes << endl;
+		cerr << "max node ID = " << scheduler.maxNodeId << endl;
 		cerr << "tau = " << tau << endl;
 		cerr << "max degree = " << scheduler.maxDegree << endl;
 	}
@@ -357,26 +399,42 @@ private:
 	}
 };
 
+
+inline string precisionString(double a){
+	stringstream precisionValue;
+	precisionValue << std::setprecision(3);
+  	precisionValue << a;
+	return precisionValue.str();
+}
+
+
 int main(int argc, char **argv) {
 	double epsilon = atof(argv[1]);
-	double lambda = atof(argv[2]);
-	double alpha = atof(argv[3]);
-	char *fileName = argv[4];
-	FullyDynamic fullyDynamic(epsilon, lambda, alpha, fileName);
-	time_t t = clock();
-	fullyDynamic.run();
-	t = clock() - t;
-	FILE *ofp = fopen("StatTimeMemory.txt", "a");
-	fprintf(ofp, "Round\t%.2f\t%f\t", epsilon, t / 1000.0);
-	cerr << t << " ms." << endl;
-//	fullyDynamic.debug();
-//	Node u;
-//	while (cin >> u)
-//		cout << fullyDynamic.getApproxCoreVal(u) << endl;
-	fullyDynamic.debug();
-	cerr << "Finished!!!" << endl;
-	double mem = outputMemory();
-	fprintf(ofp, "%f\n", mem);
-	fclose(ofp);
+	// double delta = atof(argv[2]);
+	// double alpha = atof(argv[3]);
+	// char *fileName = argv[4];
+	char *fileName = argv[2];
+	char *outFileNameArg = argv[3];
+
+	// string alphaS = precisionString(alpha);
+	// string lambdaS = precisionString(lambda);
+	string epsilonS = precisionString(epsilon);
+	// string deltaS = precisionString(delta);
+
+	string suffix = "_" + epsilonS;
+	string outFileName(outFileNameArg);
+	outFileName.append(suffix);
+    std::cout << "output to " << outFileName << std::endl;
+	cout << "start running ..." << endl;
+	
+	for (int round = 0; round < 1; round++){
+		FullyDynamic fullyDynamic(epsilon, epsilon, 1.1, fileName, outFileName);
+		gbbs::timer t; t.start();
+		fullyDynamic.run();
+		cout << endl;
+		t.next("Finished!!!");
+		fullyDynamic.scheduler.reset();
+	}
+
 	return 0;
 }
