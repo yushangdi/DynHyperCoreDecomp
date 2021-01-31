@@ -40,14 +40,22 @@ This program is developed on Windows. "-lpsapi" is related to reporting memory u
 #include "get_time.h"
 using namespace std;
 
-#define ROUND_NUM 1
+#define ROUND_NUM 4
+
+
+inline string precisionString(double a){
+	stringstream precisionValue;
+	precisionValue << std::setprecision(3);
+  	precisionValue << a;
+	return precisionValue.str();
+}
 
 class FullyDynamic {
 public:
 	FullyDynamic(double epsilon, double lambda, double alpha, char fileName[], string outFileName, bool stat, unsigned batch_size):
 		epsilon(epsilon), lambda(lambda), alpha(alpha), delta(delta), scheduler(fileName), outFileName(outFileName), stat(stat), batch_size(batch_size) {
 		initialize();
-		if(!stat)outputFileTiming.open(outFileName + "_timing.out");
+		if(!stat)outputFileTiming.open(outFileName + "_"+ precisionString(batch_size) + "_timing.out");
 	}
 
 	void output_answer(int cnt) {
@@ -404,14 +412,6 @@ private:
 		}
 	}
 };
-
-
-inline string precisionString(double a){
-	stringstream precisionValue;
-	precisionValue << std::setprecision(3);
-  	precisionValue << a;
-	return precisionValue.str();
-}
 
 
 int main(int argc, char **argv) {
