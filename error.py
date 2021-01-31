@@ -86,7 +86,7 @@ if __name__ == "__main__":
         num_rounds = 20
         batch = int(1e5)
     elif(dataset=="livejournal"):
-        num_rounds = 86
+        num_rounds = 85
         batch = int(1e6)
     else:
         print("wrong dataset name")
