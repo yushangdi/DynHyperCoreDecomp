@@ -40,11 +40,14 @@ This program is developed on Windows. "-lpsapi" is related to reporting memory u
 #include "get_time.h"
 using namespace std;
 
+#define ROUND_NUM 1
+
 class FullyDynamic {
 public:
-	FullyDynamic(double epsilon, double lambda, double alpha, char fileName[], string outFileName):
-		epsilon(epsilon), lambda(lambda), alpha(alpha), delta(delta), scheduler(fileName), outFileName(outFileName) {
+	FullyDynamic(double epsilon, double lambda, double alpha, char fileName[], string outFileName, bool stat, unsigned batch_size):
+		epsilon(epsilon), lambda(lambda), alpha(alpha), delta(delta), scheduler(fileName), outFileName(outFileName), stat(stat), batch_size(batch_size) {
 		initialize();
+		if(!stat)outputFileTiming.open(outFileName + "_timing.out");
 	}
 
 	void output_answer(int cnt) {
@@ -60,8 +63,7 @@ public:
 	}
 
 	void output_timing(int cnt, double tt) {
-		std::cout << "### Batch Running Time: " << tt << std::endl;
-    	std::cout << "### Batch Num: " << cnt << std::endl;
+		outputFileTiming << cnt << " " << tt << std::endl;
 	}
 
 
@@ -71,7 +73,7 @@ public:
 		// FILE *ofpDetail = fopen("StatFullyDynamicDetail.txt", "w");
 		int cnt = 0;
 		gbbs::timer t; t.start();
-		time_t t0 = clock(), totalTime = 0;
+		// time_t t0 = clock(), totalTime = 0;
 		int lastUpdTimestamp;
 		while (scheduler.hasNext()) {
 			EdgeUpdate edgeUpdate = scheduler.nextUpdate();
@@ -83,14 +85,16 @@ public:
 				deleteEdge(edgeUpdate.e);
 			++cnt;
 
-			if (cnt % 1000000 == 0 || !scheduler.hasNext() ) {
-		
-				output_answer(cnt);
-				// output_timing(cnt, t.get_next());
+			if (cnt % batch_size == 0 || !scheduler.hasNext() ) {
+				if(stat){
+					output_answer(cnt);
+				}else{
+					output_timing(cnt, t.get_next());
+				}
 
 				// cerr << cnt << "...\t";
 				// Block: print all b[t][u] and c[u] every 100000 updates
-				time_t t1 = clock();
+				// time_t t1 = clock();
 				// fprintf(ofpTime, "%ld\n", (long)t1 - t0);
 				// fprintf(ofpVal, "%d\n", cnt);
 
@@ -146,7 +150,7 @@ public:
 					fprintf(ofpDetail, "%.9f%c", avgErr[t], t == tau ? '\n' : ' ');
 				*/
 				///////////////// compute error end
-				t0 = clock();
+				// t0 = clock();
 			}
 
 			/*
@@ -244,6 +248,9 @@ public:
 	}
 	Hypergraph h;
 	GraphScheduler scheduler;
+	ofstream outputFileTiming;
+	bool stat; // if true, output core nums
+	unsigned batch_size;
 private:
 	double epsilon, lambda, alpha, delta;
 	string outFileName;
@@ -274,16 +281,16 @@ private:
 		b.resize(tau + 1);
 		sigma.resize(tau + 1);
 		rho.resize(tau + 1);
-		cerr << "Lambda: ";
-		for (auto& lambda: Lambda) cerr << lambda << ' ';
-		cerr << endl;
+		cout << "Lambda: ";
+		for (auto& lambda: Lambda) cout << lambda << ' ';
+		cout << endl;
 		cout << "epsilon: " << epsilon << endl;
 		cout << "lambda: " << lambda << endl;
 		cout << "alpha: " << alpha << endl;
-		cerr << "# of nodes = " << scheduler.numberOfNodes << endl;
-		cerr << "max node ID = " << scheduler.maxNodeId << endl;
-		cerr << "tau = " << tau << endl;
-		cerr << "max degree = " << scheduler.maxDegree << endl;
+		cout << "# of nodes = " << scheduler.numberOfNodes << endl;
+		cout << "max node ID = " << scheduler.maxNodeId << endl;
+		cout << "tau = " << tau << endl;
+		cout << "max degree = " << scheduler.maxDegree << endl;
 	}
 	void insertEdge(const Hyperedge& e) {
 	//	cerr << "Insert an edge" << endl;
@@ -408,26 +415,36 @@ inline string precisionString(double a){
 
 
 int main(int argc, char **argv) {
-	double epsilon = atof(argv[1]);
-	// double delta = atof(argv[2]);
+	double epsilon = atof(argv[1]); // take in our paramers and compute for sun's
+	double lambda = atof(argv[2]);
 	// double alpha = atof(argv[3]);
 	// char *fileName = argv[4];
-	char *fileName = argv[2];
-	char *outFileNameArg = argv[3];
+	char *fileName = argv[3];
+	char *outFileNameArg = argv[4];
+	int stat = atof(argv[5]); // if 1 output core num
+	int batch_size = atof(argv[6]);
 
 	// string alphaS = precisionString(alpha);
-	// string lambdaS = precisionString(lambda);
+	string lambdaS = precisionString(lambda);
 	string epsilonS = precisionString(epsilon);
 	// string deltaS = precisionString(delta);
 
-	string suffix = "_" + epsilonS;
+	string suffix = "_" + epsilonS + "_" + lambdaS;
 	string outFileName(outFileNameArg);
 	outFileName.append(suffix);
     std::cout << "output to " << outFileName << std::endl;
 	cout << "start running ..." << endl;
+
+	double epsilon_sun =1.0/2.0/lambda*(1+epsilon) + epsilon/3;// ((2+3/lambda)*(1+epsilon)/2-1)/3 ;//
+	// cout << epsilon_sun << endl; exit(1);
+	double alpha = 2 * (1 + 3 * epsilon_sun); /// theoretically correct alpha
+
 	
-	for (int round = 0; round < 1; round++){
-		FullyDynamic fullyDynamic(epsilon, epsilon, 1.1, fileName, outFileName);
+	for (int round = 0; round < ROUND_NUM; round++){
+		string outFileNameRound = outFileName;
+		string roundS = precisionString(round);
+		outFileNameRound.append("_round_"+roundS);
+		FullyDynamic fullyDynamic(epsilon_sun, epsilon_sun, alpha, fileName, outFileNameRound, stat == 1, batch_size);
 		gbbs::timer t; t.start();
 		fullyDynamic.run();
 		cout << endl;
