@@ -41,4 +41,4 @@ def get_timing2(batchsize, dataset, r):
             size_acc = 0
     print(batchsize, np.average(timings), np.max(timings))
 
-get_timing2(10**6, "youtube", 2)
+get_timing2(10**6, "orkut", 2)

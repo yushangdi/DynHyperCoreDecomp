@@ -102,7 +102,7 @@ if __name__ == "__main__":
         # error, max_error = compute_error("~/outputs/%s/%s_true_%s" % (dataset, dataset, count), "~/forked/DynHyperCoreDecomp/outputs/dblp_alpha_3_%s_round_0_%s.out" % (eps, count))
 
 
-        error, max_error = compute_error("~/outputs/%s/%s_true_%s" % (dataset, dataset, count), "/home/sy/forked/DynHyperCoreDecomp/outputs/%s_eps_lam/%s_%s_%s_round_0_%s.out" % (dataset, dataset, eps, lam, count))
+        error, max_error = compute_error("~/outputs/%s/%s_true_%s" % (dataset, dataset, count), "/home/sy/DynHyperCoreDecomp/outputs/%s_eps_lam/%s_%s_%s_round_0_%s.out" % (dataset, dataset, eps, lam, count))
         print(i, error, max_error )
         error_rounds = error_rounds + error
         max_error_rounds = max(max_error_rounds, max_error)

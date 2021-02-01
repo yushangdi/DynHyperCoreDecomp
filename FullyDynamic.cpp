@@ -40,7 +40,7 @@ This program is developed on Windows. "-lpsapi" is related to reporting memory u
 #include "get_time.h"
 using namespace std;
 
-#define ROUND_NUM 1
+#define ROUND_NUM 4
 
 
 inline string precisionString(double a){
@@ -435,8 +435,9 @@ int main(int argc, char **argv) {
     std::cout << "output to " << outFileName << std::endl;
 	cout << "start running ..." << endl;
 
-	double epsilon_sun = 1.0/2.0/(double)lambda;
-	// 1.0/2.0/lambda*(1+epsilon) + epsilon/3;// ((2+3/lambda)*(1+epsilon)/2-1)/3 ;//
+	double epsilon_sun = (2.0+3.0/(double)lambda)*(1.0+(double)epsilon)/2.0-1;
+	// double epsilon_sun = 1.0/2.0/(double)lambda;
+	// double epsilon_sun = 1.0/2.0/lambda*(1+epsilon) + epsilon/3;// ((2+3/lambda)*(1+epsilon)/2-1)/3 ;//
 	// cout << epsilon_sun << endl; exit(1);
 	double alpha = 2 * (1 + 3 * epsilon_sun); /// theoretically correct alpha
 
