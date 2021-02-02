@@ -29,8 +29,7 @@ lambdas=(3 6 12 24 48 96)
 run_all_lam(){
     eps=$1
 for lam in "${lambdas[@]}"; do
-    # echo $eps $lam
-    echo $lam 
+    echo $eps $lam
     ./FullyDynamic ${eps} ${lam} ~/datasets/edge_orientation_exps/${DATASET}_edges outputs/${DATASET}_eps_lam/${DATASET} 1 ${BATCH} > dynamic_outputs/${DATASET}_eps_lam/${DATASET}_${eps}_${lam}.txt 
     python3 error.py ${eps} ${lam} ${DATASET} > python_outputs/${DATASET}_eps_lam/${DATASET}_${eps}_${lam}.txt 
 done

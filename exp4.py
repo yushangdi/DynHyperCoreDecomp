@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import re
+import sys
 # import matplotlib.pyplot as plt
 
 total_time_find = re.compile("# PBBS time: Finished!!!: .+?\n")
@@ -36,6 +37,6 @@ def get_timing(batchsize, dataset, r):
 if __name__ == "__main__":
     dataset = sys.argv[1]
 
-    med_ind, med_val = get_median_batch_time(dataset, 0.4, 3)
+    med_ind, med_val = get_median_batch_time(dataset, 0.4, 3, 1000000)
     batchsize,avg_t, max_t = get_timing(10**6, dataset, med_ind)
     print(batchsize, med_val, avg_t, max_t)
